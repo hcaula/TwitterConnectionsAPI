@@ -16,13 +16,13 @@ end
 get "/connections" do
     user = params[:user]
     mentions = []
-    client.user_timeline(user), :count => 200).collect do |tweet|
+    client.user_timeline(user, :count => 200).collect do |tweet|
         tweet.user_mentions.each do |mention|
             filtered = mentions.select {|f| f["screen_name"] == mention.screen_name}
             if filtered.length == 0 then 
                 mentions << {
                     "screen_name" => mention.screen_name,
-                    "user_id" => mention.id,
+                    "user_id" => mention.id.to_s,
                     "name" => mention.name,
                     "count" => 1
                 }
