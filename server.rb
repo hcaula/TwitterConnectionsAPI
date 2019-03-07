@@ -13,23 +13,24 @@ client = Twitter::REST::Client.new do |config|
     config.access_token_secret = settings.access_token_secret
 end
 
-def get_mentions(tweet)
+get "/connections" do
+    user = params[:user]
     mentions = []
-    tweet.scan(/.*?(@\w+).*?/) {|x| mentions << x[0]}
-    mentions
-end
-
-get "/layer" do
-    mentions = []
-    client.user_timeline(params[:user], :count => 100, :include_rts => false).collect do |tweet|
-        get_mentions(tweet.text).each do |user_mentioned|
-            filtered = mentions.select {|mention| mention["screen_name"] == user_mentioned}
+    client.user_timeline(user), :count => 200).collect do |tweet|
+        tweet.user_mentions.each do |mention|
+            filtered = mentions.select {|f| f["screen_name"] == mention.screen_name}
             if filtered.length == 0 then 
-                mentions << {"screen_name" => user_mentioned, "count" => 1}
+                mentions << {
+                    "screen_name" => mention.screen_name,
+                    "user_id" => mention.id,
+                    "name" => mention.name,
+                    "count" => 1
+                }
             else 
                 filtered[0]["count"] += 1 
             end
         end
     end
-    json "connections" => mentions
+    
+    return json ({"connected_to" => user,"connections" => mentions})
 end
