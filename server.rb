@@ -20,9 +20,8 @@ def get_mentions(tweet)
 end
 
 get "/layer" do
-    # users = params[:users].split ","
     mentions = []
-    client.user_timeline("le_santti", :count => 200).collect do |tweet|
+    client.user_timeline(params[:user], :count => 100, :include_rts => false).collect do |tweet|
         get_mentions(tweet.text).each do |user_mentioned|
             filtered = mentions.select {|mention| mention["screen_name"] == user_mentioned}
             if filtered.length == 0 then 
