@@ -19,23 +19,23 @@ get "/connections" do
     user_sname = params[:user]
     user = {}
     mentions = []
-    client.user_timeline(user_sname, :count => 200).collect do |tweet|
+    begin
+        client.user_timeline(user_sname, :count => 200).collect do |tweet|
         user = tweet.user
-        begin
-            tweet.user_mentions.each do |mention|
-                filtered = mentions.select {|f| f["screen_name"] == mention.screen_name}
-                if filtered.length == 0 then 
-                    mentions << {
-                        "screen_name" => mention.screen_name,
-                        "user_id" => mention.id.to_s,
-                        "name" => mention.name,
-                        "count" => 1
-                    }
-                else filtered[0]["count"] += 1 end
-            end
-        rescue Twitter::Error::NotFound => e
-            return json ({"status" => 400, "message" => "Twitter user not found"})
+        tweet.user_mentions.each do |mention|
+            filtered = mentions.select {|f| f["screen_name"] == mention.screen_name}
+            if filtered.length == 0 then 
+                mentions << {
+                    "screen_name" => mention.screen_name,
+                    "user_id" => mention.id.to_s,
+                    "name" => mention.name,
+                    "count" => 1
+                }
+            else filtered[0]["count"] += 1 end
         end
+    end
+    rescue Twitter::Error => e
+        return json ({"status" => e.code, "message" => e.message})
     end
     
     return json ({
