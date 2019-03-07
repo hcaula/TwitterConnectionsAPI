@@ -16,12 +16,10 @@ end
 # Link to get profile image: "https://avatars.io/twitter/le_santti/medium"
 
 get "/connections" do
-    user_sname = params[:user]
-    user = {}
     mentions = []
     begin
-        client.user_timeline(user_sname, :count => 200).collect do |tweet|
-        user = tweet.user
+        client.user_timeline(params[:user], :count => 200).collect do |tweet|
+        @user = tweet.user
         tweet.user_mentions.each do |mention|
             filtered = mentions.select {|f| f["screen_name"] == mention.screen_name}
             if filtered.length == 0 then 
@@ -40,8 +38,8 @@ get "/connections" do
     
     return json ({
         "connected_to" => {
-            "screen_name": user["screen_name"],
-            "user_id": user["id"].to_s
+            "screen_name": @user["screen_name"],
+            "user_id": @user["id"].to_s
         },
         "connections" => mentions
     })
