@@ -13,24 +13,36 @@ client = Twitter::REST::Client.new do |config|
     config.access_token_secret = settings.access_token_secret
 end
 
+# Link to get profile image: "https://avatars.io/twitter/le_santti/medium"
+
 get "/connections" do
-    user = params[:user]
+    user_sname = params[:user]
+    user = {}
     mentions = []
-    client.user_timeline(user, :count => 200).collect do |tweet|
-        tweet.user_mentions.each do |mention|
-            filtered = mentions.select {|f| f["screen_name"] == mention.screen_name}
-            if filtered.length == 0 then 
-                mentions << {
-                    "screen_name" => mention.screen_name,
-                    "user_id" => mention.id.to_s,
-                    "name" => mention.name,
-                    "count" => 1
-                }
-            else 
-                filtered[0]["count"] += 1 
+    client.user_timeline(user_sname, :count => 200).collect do |tweet|
+        user = tweet.user
+        begin
+            tweet.user_mentions.each do |mention|
+                filtered = mentions.select {|f| f["screen_name"] == mention.screen_name}
+                if filtered.length == 0 then 
+                    mentions << {
+                        "screen_name" => mention.screen_name,
+                        "user_id" => mention.id.to_s,
+                        "name" => mention.name,
+                        "count" => 1
+                    }
+                else filtered[0]["count"] += 1 end
             end
+        rescue Twitter::Error::NotFound => e
+            return json ({"status" => 400, "message" => "Twitter user not found"})
         end
     end
     
-    return json ({"connected_to" => user,"connections" => mentions})
+    return json ({
+        "connected_to" => {
+            "screen_name": user["screen_name"],
+            "user_id": user["id"].to_s
+        },
+        "connections" => mentions
+    })
 end
