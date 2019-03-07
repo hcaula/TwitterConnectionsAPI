@@ -1,7 +1,6 @@
 require "sinatra"
 require "sinatra/config_file"
 require "sinatra/json"
-require "net/http"
 require "twitter"
 
 # Configuring Twitter client using credentials
