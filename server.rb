@@ -1,5 +1,6 @@
 require "sinatra"
 require "sinatra/config_file"
+require "sinatra/json"
 require "net/http"
 require "twitter"
 
@@ -13,16 +14,23 @@ client = Twitter::REST::Client.new do |config|
 end
 
 def get_mentions(tweet)
-    return tweet.scan(/.*?(@\w+).*?/)
-end
-
-def retrieve_mentions(user)
-    # client.user_timeline("le_santti", :count => 200).collect do |tweet|
-    #     "#{tweet.user.screen_name}: #{tweet.text}\n\n"
-    # end
+    mentions = []
+    tweet.scan(/.*?(@\w+).*?/) {|x| mentions << x[0]}
+    mentions
 end
 
 get "/layer" do
     # users = params[:users].split ","
-    puts get_mentions("@onllayne Carina saiu no lucro, nem vai ter @jardimderecife que ir no shopping metrópole e ainda pegou o namorado da Cássia")
+    mentions = []
+    client.user_timeline("le_santti", :count => 200).collect do |tweet|
+        get_mentions(tweet.text).each do |user_mentioned|
+            filtered = mentions.select {|mention| mention["screen_name"] == user_mentioned}
+            if filtered.length == 0 then 
+                mentions << {"screen_name" => user_mentioned, "count" => 1}
+            else 
+                filtered[0]["count"] += 1 
+            end
+        end
+    end
+    json "connections" => mentions
 end
